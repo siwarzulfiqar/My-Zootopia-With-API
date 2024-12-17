@@ -1,59 +1,44 @@
-import json
+import requests
 
-def load_animal_data(filename):
-    """Loads animal data from a JSON file."""
-    try:
-        with open(filename, 'r') as file:
-            return json.load(file)
-    except FileNotFoundError:
-        print(f"Error: File '{filename}' not found.")
+
+# function to fetch animal data
+def fetch_data(animal_name):
+    url = f"https://api.api-ninjas.com/v1/animals?name={animal_name}"
+    headers = {
+        'X-Api-Key': 'PkENBQCJu7xhonKfJq1flg==lYMSRIROvX6QU1Gv'
+    }
+
+    response = requests.get(url, headers=headers)
+
+    if response.status_code == 200:
+        data = response.json()
+        if data:  # check if data is not empty
+            return data
+        else:
+            print(f"No data found for '{animal_name}'")
+            return []
+    else:
+        print(f"Error: Received {response.status_code} from the API")
         return []
 
-def generate_animal_cards(data):
-    """Generates HTML card snippets for each animal."""
-    cards_html = ""
-    for animal in data:
-        try:
-            cards_html += f"""
-            <li class="cards__item">
-                <div class="card__title">{animal['name']}</div>
-                <p class="card__text">
-                    <strong>Type:</strong> {animal['characteristics'].get('type', 'Unknown')}<br>
-                    <strong>Diet:</strong> {animal['characteristics']['diet']}<br>
-                    <strong>Locations:</strong> {", ".join(animal['locations'])}
-                </p>
-            </li>
-            """
-        except KeyError as e:
-            print(f"Error: Missing key {e} in animal data {animal}")
-    return cards_html
 
-def write_html(cards_html, output_file='animals.html', template_file='animals_template.html'):
-    """Writes the final HTML file using the template and generated cards."""
-    try:
-        with open(template_file, 'r') as template:
-            template_content = template.read()
-
-        # Replace the placeholder with animal cards
-        final_html = template_content.replace('__REPLACE_ANIMALS_INFO__', cards_html)
-
-        # Write the final HTML to the output file
-        with open(output_file, 'w') as output:
-            output.write(final_html)
-        print(f"HTML file generated successfully: {output_file}")
-
-    except FileNotFoundError as e:
-        print(f"Error: {e}")
-
+# main function to interact with the user
 def main():
-    # Load animal data from JSON
-    data = load_animal_data('animals_data.json')
+    animal_name = input("Enter the name of an animal: ")
+    animals = fetch_data(animal_name)
 
-    # Generate animal cards
-    animal_cards = generate_animal_cards(data)
+    if animals:
+        print(f"Data for {animal_name}:")
+        for animal in animals:
+            print(f"Name: {animal.get('name', 'N/A')}")
+            characteristics = animal.get('characteristics', {})
+            print(f"Type: {characteristics.get('type', 'Unknown')}")
+            print(f"Diet: {characteristics.get('diet', 'Unknown')}")
+            print(f"Locations: {', '.join(animal.get('locations', ['Unknown']))}")
+            print()
+    else:
+        print(f"No information found for '{animal_name}'.")
 
-    # Write the HTML file
-    write_html(animal_cards)
 
 if __name__ == "__main__":
     main()
